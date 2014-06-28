@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd"
+       default-autowire="byName">
+
+    <bean id="propertyConfigurer"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreResourceNotFound" value="true" />
+        <property name="locations">
+            <list>
+                <value>classpath:conf/sgipConf.properties</value>
+            </list>
+        </property>
+    </bean>
+    <context:annotation-config />
+    <context:component-scan base-package="com.sgip.**.service.impl,com.main.task" />
+
+
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"></property>
+        <property name="jdbcUrl" value="jdbc:sqlserver://localhost:1433;DatabaseName=SGIP"></property>
+        <property name="user" value="cncsp"></property>
+        <property name="password" value="cncsp123"></property>
+        <property name="initialPoolSize" value="5"></property>
+        <property name="maxPoolSize" value="60"></property>
+        <property name="acquireIncrement" value="2"></property>
+        <property name="idleConnectionTestPeriod" value="60"></property>
+        <property name="maxIdleTime" value="250"></property>
+    </bean>
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" abstract="false" lazy-init="false" autowire="default">
+        <property name="dataSource">
+            <ref bean="dataSource"/>
+        </property>
+    </bean>
+
+
+<!--线程池-->
+    <bean id="taskExecutor"
+          class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="2" />  <!-- 并发线程数,想达到真正的并发效果,最好对应CPU的线程数及核心数 -->
+        <property name="keepAliveSeconds" value="1" />
+        <property name="maxPoolSize" value="2" />     <!-- 最大线程池容量 -->
+        <property name="queueCapacity" value="25" />   <!-- 超过最大线程池容量后,允许的线程队列数 -->
+    </bean>
+
+    <!--定时任务-->
+     <!--<bean class="com.main.task.ScheduledTask" id="scheduledTask1"/>-->
+    <task:scheduled-tasks>
+        <task:scheduled ref="scheduledTask" method="getSmsFronDB" cron="2/5 * * * * ?"/><!--延迟3秒启动间隔8秒-->
+    </task:scheduled-tasks>
+
+</beans>
+
